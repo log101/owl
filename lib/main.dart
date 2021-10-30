@@ -91,6 +91,8 @@ class ApplicationState extends ChangeNotifier {
                 howto: document.data()['howto'],
                 info: document.data()['info'],
                 imageurl: document.data()['imageurl'],
+                done: document.data()['done'],
+                category: document.data()['category'],
               ),
             );
           });
@@ -215,12 +217,14 @@ class ApplicationState extends ChangeNotifier {
 }
 
 class RecipeInfo {
-  RecipeInfo({required this.date, required this.title, this.howto, this.imageurl, this.info});
+  RecipeInfo({required this.date, required this.title, this.howto = "", this.imageurl = "", this.info = "", this.done = false, this.category = ""});
   final int date;
+  final String category;
   final String title;
-  final String? howto;
-  final String? imageurl;
-  final String? info;
+  final String howto;
+  final String imageurl;
+  final String info;
+  final bool done;
 }
 
 class RecipesOfThatDay extends StatefulWidget {
@@ -235,11 +239,86 @@ class _RecipesOfThatDayState extends State<RecipesOfThatDay> {
     return Consumer<ApplicationState>(
       builder: (context, appState, _) => ListView(
         children: [
+          Padding(
+            padding: const EdgeInsets.only(left: 16.0, top: 16.0),
+            child: Text("Todo", style: Theme.of(context).textTheme.headline6),
+          ),
+          DividerSubHeader(title: "Medicine"),
           for (var recipe in appState.recipes)
-            ListTile(title: Text(recipe.title)),
+            if (recipe.category == "medicine" && recipe.done != true)
+            RecipeTile(recipe: recipe),
+          Divider(indent: 16),
+          DividerSubHeader(title: "Food"),
+          for (var recipe in appState.recipes)
+            if (recipe.category == "food" && recipe.done != true)
+              RecipeTile(recipe: recipe),
+          Divider(indent: 16),
+          DividerSubHeader(title: "Exercise"),
+          for (var recipe in appState.recipes)
+            if (recipe.category == "exercise" && recipe.done != true)
+              RecipeTile(recipe: recipe),
+          Padding(
+            padding: const EdgeInsets.only(left: 16.0, top: 16.0),
+            child: Text("Done", style: Theme.of(context).textTheme.headline6),
+          ),
+          for (var recipe in appState.recipes)
+            if (recipe.done == true)
+              RecipeTile(recipe: recipe),
         ],
       ),
     );
+  }
+}
+
+class DividerSubHeader extends StatelessWidget {
+  const DividerSubHeader({
+    Key? key, required this.title,
+  }) : super(key: key);
+
+  final String title;
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: EdgeInsets.only(left: 16, top: 16),
+      child: Align(
+        alignment: Alignment.centerLeft,
+        child: Text(
+          title,
+          style: Theme.of(context).textTheme.bodyText2!.copyWith(
+              fontSize: 12.0,
+              color: Theme.of(context).textTheme.caption!.color),
+          textAlign: TextAlign.start,
+        ),
+      ),
+    );
+  }
+}
+
+class RecipeTile extends StatelessWidget {
+  const RecipeTile({
+    Key? key,
+    required this.recipe,
+  }) : super(key: key);
+
+  final RecipeInfo recipe;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: EdgeInsets.fromLTRB(8.0, 0.0, 8.0, 0.0),
+    child: ListTile(
+      contentPadding: EdgeInsets.all(8.0),
+        title: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+            Text(recipe.title),
+            Text(recipe.howto, style: TextStyle(color: Colors.grey)),
+          ]),
+        leading: Image.network(recipe.imageurl),
+      trailing: Icon(
+        (recipe.done) ? Icons.task_alt_outlined : Icons.error_outline_outlined, color: (recipe.done) ? Colors.green : Colors.red,
+      ),
+    ));
   }
 }
 
