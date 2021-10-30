@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:gtk_flutter/main.dart';
 
 class Header extends StatelessWidget {
   const Header(this.heading);
@@ -129,6 +130,6 @@ class _HomePageState extends State<HomePage> {
 class HomeTab extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    return Text('Naber?');
+    return RecipesOfThatDay();
   }
 }

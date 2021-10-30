@@ -77,6 +77,25 @@ class ApplicationState extends ChangeNotifier {
     FirebaseAuth.instance.userChanges().listen((user) {
       if (user != null) {
         _loginState = ApplicationLoginState.loggedIn;
+        _recipesSubscription = FirebaseFirestore.instance
+            .collection('recipes')
+            .orderBy('timestamp', descending: true)
+            .snapshots()
+            .listen((snapshot) {
+          _recipes = [];
+          snapshot.docs.forEach((document) {
+            _recipes.add(
+              RecipeInfo(
+                title: document.data()['title'],
+                date: document.data()['date'],
+                howto: document.data()['howto'],
+                info: document.data()['info'],
+                imageurl: document.data()['imageurl'],
+              ),
+            );
+          });
+          notifyListeners();
+        });
         _guestBookSubscription = FirebaseFirestore.instance
             .collection('guestbook')
             .orderBy('timestamp', descending: true)
@@ -98,6 +117,9 @@ class ApplicationState extends ChangeNotifier {
         _loginState = ApplicationLoginState.loggedOut;
         _guestBookMessages = [];
         _guestBookSubscription?.cancel();
+
+        _recipes = [];
+        _recipesSubscription?.cancel();
       }
       notifyListeners();
     });
@@ -110,8 +132,11 @@ class ApplicationState extends ChangeNotifier {
   String? get email => _email;
 
   StreamSubscription<QuerySnapshot>? _guestBookSubscription;
+  StreamSubscription<QuerySnapshot>? _recipesSubscription;
   List<GuestBookMessage> _guestBookMessages = [];
+  List<RecipeInfo> _recipes = [];
   List<GuestBookMessage> get guestBookMessages => _guestBookMessages;
+  List<RecipeInfo> get recipes => _recipes;
 
 
   void startLoginFlow() {
@@ -187,6 +212,35 @@ class ApplicationState extends ChangeNotifier {
     });
   }
 
+}
+
+class RecipeInfo {
+  RecipeInfo({required this.date, required this.title, this.howto, this.imageurl, this.info});
+  final int date;
+  final String title;
+  final String? howto;
+  final String? imageurl;
+  final String? info;
+}
+
+class RecipesOfThatDay extends StatefulWidget {
+  @override
+  State<StatefulWidget> createState() => _RecipesOfThatDayState();
+
+}
+
+class _RecipesOfThatDayState extends State<RecipesOfThatDay> {
+  @override
+  Widget build(BuildContext context) {
+    return Consumer<ApplicationState>(
+      builder: (context, appState, _) => ListView(
+        children: [
+          for (var recipe in appState.recipes)
+            ListTile(title: Text(recipe.title)),
+        ],
+      ),
+    );
+  }
 }
 
 class GuestBookMessage {
