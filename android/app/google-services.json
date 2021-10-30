@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "182215713205",
+    "project_id": "owl-app-e2025",
+    "storage_bucket": "owl-app-e2025.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:182215713205:android:60d5b8fff84cafa48cf9fc",
+        "android_client_info": {
+          "package_name": "com.example.gtk_flutter"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "182215713205-76ls8uth68hh1cl56tvfse5vthkkm2v2.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBaxeI-0r_j7eKskDa51PAg_yMf56_3AtU"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "182215713205-76ls8uth68hh1cl56tvfse5vthkkm2v2.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
