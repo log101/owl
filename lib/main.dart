@@ -93,6 +93,7 @@ class ApplicationState extends ChangeNotifier {
                 imageurl: document.data()['imageurl'],
                 done: document.data()['done'],
                 category: document.data()['category'],
+                id: document.id,
               ),
             );
           });
@@ -214,10 +215,17 @@ class ApplicationState extends ChangeNotifier {
     });
   }
 
+  Future<void> markRecipeDone(String id, bool val) {
+    return FirebaseFirestore.instance.collection('recipes').doc(id).update(
+      {'done': val}).then((value) => print('recipe state updated'))
+        .catchError((error) => print("Failed to update recipe: $error"));
+  }
+
 }
 
 class RecipeInfo {
-  RecipeInfo({required this.date, required this.title, this.howto = "", this.imageurl = "", this.info = "", this.done = false, this.category = ""});
+  RecipeInfo(
+      {required this.id, required this.date, required this.title, this.howto = "", this.imageurl = "", this.info = "", this.done = false, this.category = ""});
   final int date;
   final String category;
   final String title;
@@ -225,6 +233,7 @@ class RecipeInfo {
   final String imageurl;
   final String info;
   final bool done;
+  final String id;
 }
 
 class RecipesOfThatDay extends StatefulWidget {
@@ -240,30 +249,30 @@ class _RecipesOfThatDayState extends State<RecipesOfThatDay> {
       builder: (context, appState, _) => ListView(
         children: [
           Padding(
-            padding: const EdgeInsets.only(left: 16.0, top: 16.0),
+            padding: const EdgeInsets.all(16.0),
             child: Text("Todo", style: Theme.of(context).textTheme.headline6),
           ),
           DividerSubHeader(title: "Medicine"),
           for (var recipe in appState.recipes)
             if (recipe.category == "medicine" && recipe.done != true)
-            RecipeTile(recipe: recipe),
+            RecipeTile(recipe: recipe, markDone: appState.markRecipeDone),
           Divider(indent: 16),
           DividerSubHeader(title: "Food"),
           for (var recipe in appState.recipes)
             if (recipe.category == "food" && recipe.done != true)
-              RecipeTile(recipe: recipe),
+              RecipeTile(recipe: recipe, markDone: appState.markRecipeDone),
           Divider(indent: 16),
           DividerSubHeader(title: "Exercise"),
           for (var recipe in appState.recipes)
             if (recipe.category == "exercise" && recipe.done != true)
-              RecipeTile(recipe: recipe),
+              RecipeTile(recipe: recipe, markDone: appState.markRecipeDone),
           Padding(
-            padding: const EdgeInsets.only(left: 16.0, top: 16.0),
+            padding: const EdgeInsets.all(16.0),
             child: Text("Done", style: Theme.of(context).textTheme.headline6),
           ),
           for (var recipe in appState.recipes)
             if (recipe.done == true)
-              RecipeTile(recipe: recipe),
+              RecipeTile(recipe: recipe, markDone: appState.markRecipeDone),
         ],
       ),
     );
@@ -279,7 +288,7 @@ class DividerSubHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: EdgeInsets.only(left: 16, top: 16),
+      padding: EdgeInsets.only(left: 16),
       child: Align(
         alignment: Alignment.centerLeft,
         child: Text(
@@ -298,27 +307,57 @@ class RecipeTile extends StatelessWidget {
   const RecipeTile({
     Key? key,
     required this.recipe,
+    required this.markDone
   }) : super(key: key);
 
+  final Future<void> Function(String, bool) markDone;
   final RecipeInfo recipe;
 
   @override
   Widget build(BuildContext context) {
+    Future<void> _markDoneDialog() async {
+      return showDialog<void>(
+        context: context,
+        builder: (BuildContext context) {
+          return AlertDialog(
+            title: const Text('Mark Done'),
+            content: SingleChildScrollView(
+              child: ListBody(
+                children: const <Widget>[
+                  Text('Would you like mark this as done?'),
+                ],
+              ),
+            ),
+            actions: <Widget>[
+              TextButton(
+                child: const Text('Confirm'),
+                onPressed: () async {
+                  await markDone(recipe.id, !recipe.done);
+                  Navigator.of(context).pop();
+                },
+              ),
+            ],
+          );
+        },
+      );
+    }
+
     return Padding(
       padding: EdgeInsets.fromLTRB(8.0, 0.0, 8.0, 0.0),
-    child: ListTile(
-      contentPadding: EdgeInsets.all(8.0),
-        title: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-            Text(recipe.title),
-            Text(recipe.howto, style: TextStyle(color: Colors.grey)),
-          ]),
-        leading: Image.network(recipe.imageurl),
-      trailing: Icon(
-        (recipe.done) ? Icons.task_alt_outlined : Icons.error_outline_outlined, color: (recipe.done) ? Colors.green : Colors.red,
-      ),
-    ));
+      child: ListTile(
+        onTap: _markDoneDialog,
+        contentPadding: EdgeInsets.all(8.0),
+          title: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+              Text(recipe.title),
+              Text(recipe.howto, style: TextStyle(color: Colors.grey)),
+            ]),
+          leading: Image.network(recipe.imageurl),
+        trailing: Icon(
+          (recipe.done) ? Icons.task_alt_outlined : Icons.error_outline_outlined, color: (recipe.done) ? Colors.green : Colors.red,
+        ),
+      ));
   }
 }
 
